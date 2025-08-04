@@ -1,5 +1,4 @@
-import init_django_orm
-import json  # noqa: F401
+import json
 
 from pathlib import Path
 from db.models import Race, Skill, Player, Guild
