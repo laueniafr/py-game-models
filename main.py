@@ -1,4 +1,5 @@
-import init_django_orm, json  # noqa: F401
+import init_django_orm
+import json  # noqa: F401
 
 from pathlib import Path
 from db.models import Race, Skill, Player, Guild
@@ -63,6 +64,7 @@ def main() -> None:
                 "created_at": timezone.now()
             }
         )
+
 
 if __name__ == "__main__":
     main()
