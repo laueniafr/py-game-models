@@ -1,66 +1,43 @@
 import json
-
-from pathlib import Path
-from db.models import Race, Skill, Player, Guild
-from django.utils import timezone
+import init_django_orm  #noqa:f401
+from db.models import Guild, Player, Race, Skill
 
 
 def main() -> None:
-    json_path = Path("players.json")
+    with open("players.json", encoding="utf-8") as f:
+        players = json.load(f)
 
-    # Lê o conteúdo do arquivo
-    with open(json_path, encoding="utf-8") as f:
-        data = json.load(f)
-
-    for nickname, player_data in data.items():
-        email = player_data["email"]
-        bio = player_data["bio"]
-
-        # === RACE ===
+    for nickname, player_data in players.items():
         race_info = player_data["race"]
-        race_name = race_info["name"]
-        race_description = race_info["description"]
-
-        # Cria ou recupera a Race
-        race_obj, _ = Race.objects.get_or_create(
-            name=race_name,
-            defaults={"description": race_description}
+        race, _ = Race.objects.get_or_create(
+            name=race_info["name"],
+            defaults={"description": race_info.get("description", "")}
         )
 
-        # === SKILLS ===
-        for skill in race_info["skills"]:
-            skill_name = skill["name"]
-            skill_bonus = skill["bonus"]
-
-            # Cria ou recupera a Skill com base no nome e raça
+        for skill in race_info.get("skills", []):
             Skill.objects.get_or_create(
-                name=skill_name,
-                race=race_obj,
-                defaults={"bonus": skill_bonus}
+                name=skill["name"],
+                defaults={
+                    "bonus": skill["bonus"],
+                    "race": race
+                }
             )
 
-        # === GUILD ===
-        guild_data = player_data.get("guild")
-        guild_obj = None
-
-        if guild_data:
-            guild_name = guild_data["name"]
-            guild_description = guild_data["description"]
-
-            guild_obj, _ = Guild.objects.get_or_create(
-                name=guild_name,
-                defaults={"description": guild_description}
+        guild = None
+        guild_info = player_data.get("guild")
+        if guild_info:
+            guild, _ = Guild.objects.get_or_create(
+                name=guild_info["name"],
+                defaults={"description": guild_info.get("description")}
             )
 
-        # === PLAYER ===
         Player.objects.get_or_create(
             nickname=nickname,
             defaults={
-                "email": email,
-                "bio": bio,
-                "race": race_obj,
-                "guild": guild_obj,
-                "created_at": timezone.now()
+                "email": player_data["email"],
+                "bio": player_data["bio"],
+                "race": race,
+                "guild": guild
             }
         )
 
